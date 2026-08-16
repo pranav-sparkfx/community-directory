@@ -1,4 +1,11 @@
+import { loadEnvConfig } from "@next/env";
 import { defineConfig, devices } from "@playwright/test";
+
+// Give the test process the same .env.local the app was built with. A test
+// that needs to know which backend the app talks to should read it from the
+// same source the app did, rather than hardcoding a spelling that is only
+// correct while the stack happens to be local.
+loadEnvConfig(process.cwd());
 
 /**
  * E2E configuration.
@@ -8,10 +15,13 @@ import { defineConfig, devices } from "@playwright/test";
  * desk. A desktop project runs the same journeys to catch layouts that only
  * hold together at one width.
  *
- * `webServer` is deliberately NOT set. These tests run against the local
- * Supabase stack and the seeded Summerlake community; starting a server that
- * points at an unseeded database would produce confident green runs against
- * an empty neighbourhood. Start `npm run dev` and `supabase start` first.
+ * `webServer` is deliberately NOT set. These tests need the seeded Summerlake
+ * community to exist; starting a server that points at an unseeded database
+ * would produce confident green runs against an empty neighbourhood. Start
+ * `npm run dev` first, against whichever Supabase project .env.local names —
+ * the local stack (`supabase start`) or the hosted one. Both carry the same
+ * seed, and the journeys write to it, so do not point this at a database
+ * whose contents matter.
  */
 export default defineConfig({
   testDir: "./e2e",

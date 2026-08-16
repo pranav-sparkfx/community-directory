@@ -45,11 +45,21 @@ test.describe("Performance budget", () => {
   });
 
   test("no render-blocking third-party requests", async ({ page }) => {
+    // Supabase is our backend, not a third party, so it is read from the
+    // environment rather than assumed to be localhost. It only passed as
+    // "first-party" before because the local stack happens to serve from
+    // 127.0.0.1; against a hosted project the same requests are identical in
+    // every way that matters to this budget, and hardcoding the local spelling
+    // would fail the moment the app is pointed anywhere real.
+    const supabaseHost = new URL(
+      process.env.NEXT_PUBLIC_SUPABASE_URL ?? "http://127.0.0.1:54321",
+    ).hostname;
+
     const thirdParty: string[] = [];
     page.on("request", (r) => {
       const url = new URL(r.url());
       // The tile server is a deliberate, documented dependency of the map.
-      const allowed = ["localhost", "127.0.0.1", "tiles.openfreemap.org"];
+      const allowed = ["localhost", "127.0.0.1", "tiles.openfreemap.org", supabaseHost];
       if (!allowed.includes(url.hostname)) thirdParty.push(r.url());
     });
 

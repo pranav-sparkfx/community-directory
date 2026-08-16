@@ -10,18 +10,23 @@ export const PEOPLE = {
   otherResident: "ana.petrov16@summerlake.test",
 } as const;
 
+/** Set by supabase/seed.sql for every account in PEOPLE. */
+export const SEED_PASSWORD = "summerlake";
 
 /**
  * Sign in through the real form.
  *
- * Uses the dev password button rather than seeding a session cookie: the
- * cookie shape is Supabase's business and a test that fabricates one stops
+ * Fills the form a resident would fill rather than seeding a session cookie:
+ * the cookie shape is Supabase's business and a test that fabricates one stops
  * catching auth regressions the moment that shape changes.
  */
 export async function signIn(page: Page, email: string) {
   await page.goto("/sign-in");
   await page.getByLabel(/email/i).fill(email);
-  await page.getByRole("button", { name: /dev: sign in/i }).click();
+  // Anchored, because /password/i alone also matches nothing else today but
+  // would quietly match a "Confirm password" field the day one is added.
+  await page.getByLabel(/^password$/i).fill(SEED_PASSWORD);
+  await page.getByRole("button", { name: /^sign in$/i }).click();
 
   // Sign-in finishes with a CLIENT-side router.push, which resolves after the
   // click promise does. Waiting only for the URL to leave /sign-in returned
