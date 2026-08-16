@@ -70,6 +70,49 @@ export interface HouseholdCard {
   can_edit: boolean;
 }
 
+/**
+ * One searchable person, as returned by search_index().
+ *
+ * Note what is absent, again: no phone, no email, no avatar. This exists to
+ * answer "who can I search for and which door are they behind" — everything
+ * else still comes from household_card(), one household at a time, with the
+ * redaction attached.
+ */
+export interface SearchPerson {
+  profile_id: string;
+  name: string;
+  household_id: string;
+  address: string;
+  unit: string | null;
+}
+
+/**
+ * A row in the search overlay.
+ *
+ * People and households are one flat, ordered list rather than two, because
+ * the keyboard walks a single sequence with ↑/↓ regardless of which section
+ * headers happen to sit between the rows.
+ */
+export type SearchResult =
+  | { kind: "person"; id: string; person: SearchPerson; feature: HouseholdFeature }
+  | { kind: "household"; id: string; feature: HouseholdFeature };
+
+/**
+ * A request for the map to centre somewhere.
+ *
+ * `offset` is in pixels and moves the target off the container centre, which
+ * is how the pin ends up in the strip of map still visible above the open
+ * bottom sheet rather than underneath it. The map does not know the sheet
+ * exists; whoever owns the sheet works out the number.
+ *
+ * Identity is the trigger: a new object means "go there now", so picking the
+ * same home twice re-centres rather than doing nothing.
+ */
+export interface MapFocus {
+  center: [number, number];
+  offset: [number, number];
+}
+
 export interface ServiceCategory {
   slug: string;
   label: string;

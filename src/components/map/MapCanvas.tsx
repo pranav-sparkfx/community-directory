@@ -4,7 +4,18 @@ import { useEffect, useRef, useState } from "react";
 import type { Map as MLMap, GeoJSONSource } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { frontPorchStyle, MAP_TOKENS } from "@/lib/map/style";
-import type { HouseholdCollection, HouseholdFeature } from "@/lib/types";
+import type { HouseholdCollection, HouseholdFeature, MapFocus } from "@/lib/types";
+
+/**
+ * Where a fly-to lands.
+ *
+ * Above clusterMaxZoom (16), and not by accident. Below it the source is
+ * still clustering, so the household being flown to has no individual feature
+ * on the map at all — the selected-pin layer filters on `id`, matches
+ * nothing, and the journey ends on an anonymous cluster dot with no
+ * indication which of the homes under it was the answer.
+ */
+const FOCUS_ZOOM = 17.5;
 
 /**
  * FrontPorch/MapCanvas
@@ -44,6 +55,7 @@ export function MapCanvas({
   center,
   zoom,
   selectedId,
+  focus,
   onSelect,
   className,
 }: {
@@ -51,6 +63,8 @@ export function MapCanvas({
   center: [number, number];
   zoom: number;
   selectedId: string | null;
+  /** A new object means "centre here now"; null means leave the camera alone. */
+  focus?: MapFocus | null;
   onSelect: (feature: HouseholdFeature | null) => void;
   className?: string;
 }) {
@@ -294,6 +308,36 @@ export function MapCanvas({
     if (!map || !ready) return;
     map.setFilter("pin-selected", ["==", ["get", "id"], selectedId ?? "__none__"]);
   }, [selectedId, ready]);
+
+  // Fly to a picked search result.
+  //
+  // Keyed on the identity of `focus`, which is a state object created only
+  // when someone picks something — so this does not re-run on unrelated
+  // renders, and picking the same home twice does re-centre.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready || !focus) return;
+
+    // The flight is orientation, not decoration: it shows where in the
+    // neighbourhood the answer sits relative to where you were looking. For
+    // anyone who has asked the system for less motion, that is not worth
+    // 1.1 seconds of movement, so they get the destination directly.
+    const reduced =
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    const camera = {
+      center: focus.center,
+      zoom: FOCUS_ZOOM,
+      // Lifts the pin out of the half of the screen the bottom sheet is about
+      // to cover. Computed by the caller, which is the only party that knows
+      // how tall the sheet will be.
+      offset: focus.offset,
+    };
+
+    if (reduced) map.jumpTo(camera);
+    else map.flyTo({ ...camera, duration: 1100, essential: true });
+  }, [focus, ready]);
 
   return (
     <>

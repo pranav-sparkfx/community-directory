@@ -93,6 +93,15 @@ h1, h2, h3 {
   border: 1px solid var(--fp-line);
   border-radius: var(--fp-radius-lg);
   box-shadow: var(--fp-shadow-card);
+
+  /* Cards are almost always laid out inside a single-column `display: grid`
+     stack. A grid item's min-width defaults to `auto`, which means the 1fr
+     track will not shrink below the item's min-content width — so one card
+     with a wide row (avatar + name + an action button that must not shrink)
+     silently widened the whole page and made every phone scroll sideways.
+     min-width: 0 lets the card take the track's width and resolve the
+     pressure inside itself, where min-w-0 and truncate already handle it. */
+  min-width: 0;
 }
 
 /* Visually hidden but reachable by screen readers — used for the map's

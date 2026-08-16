@@ -1,5 +1,12 @@
 import { describe, expect, test } from "vitest";
-import { boundedEditDistance, normalize, rankByMatch, scoreMatch } from "./search";
+import {
+  boundedEditDistance,
+  normalize,
+  rankByMatch,
+  rankByNamePrefix,
+  scoreMatch,
+  scoreNamePrefix,
+} from "./search";
 
 const ADDRESSES = [
   "2600 Flintgrove Loop",
@@ -78,5 +85,79 @@ describe("rankByMatch", () => {
 
   test("returns nothing when the query matches nothing", () => {
     expect(rank("zzzznotastreet")).toEqual([]);
+  });
+});
+
+const NAMES = [
+  "Aaron Diaz",
+  "Priya Aarav",
+  "John Smith",
+  "Ada Smithson",
+  "Maya Diaz",
+];
+
+const people = (query: string) => rankByNamePrefix(NAMES, query, (n) => n);
+
+describe("scoreNamePrefix", () => {
+  test("returns 0 for an empty query", () => {
+    expect(scoreNamePrefix("   ", "Aaron Diaz")).toBe(0);
+  });
+
+  test("ranks a first-name hit above a surname hit", () => {
+    expect(scoreNamePrefix("aa", "Aaron Diaz")).toBeGreaterThan(
+      scoreNamePrefix("aa", "Priya Aarav"),
+    );
+  });
+
+  test("ranks a whole-word hit above a partial one at the same position", () => {
+    expect(scoreNamePrefix("aaron", "Aaron Diaz")).toBeGreaterThan(
+      scoreNamePrefix("aar", "Aaron Diaz"),
+    );
+  });
+
+  test("does not match a word the query only appears inside", () => {
+    // "saac" sits inside "Isaac", but nobody types the middle of a name
+    // expecting to find it, and allowing it turns a two-letter query into a
+    // wall of coincidences.
+    expect(scoreNamePrefix("saac", "Isaac Ng")).toBe(0);
+  });
+
+  test("requires every query token to match some word", () => {
+    expect(scoreNamePrefix("aaron smith", "Aaron Diaz")).toBe(0);
+  });
+
+  test("matches a first name and a surname initial together", () => {
+    expect(scoreNamePrefix("aaron d", "Aaron Diaz")).toBeGreaterThan(0);
+  });
+
+  test("does not typo-correct, unlike the address matcher", () => {
+    // A neighbour's name is not a street: offering "Aaron" to someone who
+    // typed "Aoron" is a guess about a person, and being confidently wrong
+    // about who lives where is worse than returning nothing.
+    expect(scoreNamePrefix("aoron", "Aaron Diaz")).toBe(0);
+  });
+});
+
+describe("rankByNamePrefix", () => {
+  test("returns nothing for a blank query", () => {
+    // Deliberately unlike rankByMatch, which passes everything through: an
+    // empty prefix that matches the whole directory is not a suggestion list.
+    expect(people("  ")).toEqual([]);
+  });
+
+  test("finds every word starting with the query, first names first", () => {
+    expect(people("aa")).toEqual(["Aaron Diaz", "Priya Aarav"]);
+  });
+
+  test("finds people by surname", () => {
+    expect(people("smith")).toEqual(["John Smith", "Ada Smithson"]);
+  });
+
+  test("keeps input order for equally good matches", () => {
+    expect(people("diaz")).toEqual(["Aaron Diaz", "Maya Diaz"]);
+  });
+
+  test("returns nothing when the query matches nobody", () => {
+    expect(people("zzzz")).toEqual([]);
   });
 });

@@ -133,6 +133,72 @@ export function scoreMatch(query: string, fields: (string | null | undefined)[])
 }
 
 /**
+ * Score a person's name against a query, prefix-only.
+ *
+ * Names get a different rule from addresses, and the difference is not an
+ * oversight. The address matcher above tolerates a slipped key because a
+ * street is a shared, guessable thing and "flintgrve" has one obvious
+ * intention. A name is not: offering "Aaron Diaz" to someone who typed
+ * "Aoron" is a guess about which neighbour they meant, and being confidently
+ * wrong about who lives at a particular door is worse than returning nothing.
+ * So there is no typo budget here, and no mid-word substring match either —
+ * "saac" does not reach "Isaac", because nobody types the middle of a name.
+ *
+ * Every word is a valid starting point, so "smith" finds "John Smith". A hit
+ * on the first word outranks a hit on a later one: someone typing "aa" is
+ * more likely to want Aaron than Priya Aarav, but both are real answers.
+ *
+ * Returns 0 for "no match" so callers can filter on truthiness.
+ */
+export function scoreNamePrefix(query: string, name: string): number {
+  const queryTokens = tokenize(query);
+  if (queryTokens.length === 0) return 0;
+
+  const nameTokens = tokenize(name);
+  if (nameTokens.length === 0) return 0;
+
+  let total = 0;
+  for (const token of queryTokens) {
+    let best = 0;
+    for (let i = 0; i < nameTokens.length; i++) {
+      const candidate = nameTokens[i];
+      if (!candidate.startsWith(token)) continue;
+      // Position first: which word matched matters more than how much of it
+      // did, so a complete surname still sorts below a partial first name.
+      const positional = i === 0 ? 100 : 70;
+      const score = candidate.length === token.length ? positional + 5 : positional;
+      if (score > best) best = score;
+    }
+    // A query token that matches no word vetoes the person outright, so
+    // "aaron smith" cannot reach Aaron Diaz on the strength of one half.
+    if (best === 0) return 0;
+    total += best;
+  }
+  return total / queryTokens.length;
+}
+
+/**
+ * Filter and rank `items` by name prefix.
+ *
+ * Unlike `rankByMatch`, a blank query returns nothing rather than everything:
+ * this feeds a suggestion list, and an empty prefix that matches the entire
+ * directory is not a suggestion.
+ */
+export function rankByNamePrefix<T>(
+  items: readonly T[],
+  query: string,
+  nameOf: (item: T) => string,
+): T[] {
+  if (!normalize(query)) return [];
+
+  return items
+    .map((item, index) => ({ item, index, score: scoreNamePrefix(query, nameOf(item)) }))
+    .filter((entry) => entry.score > 0)
+    .sort((a, b) => b.score - a.score || a.index - b.index)
+    .map((entry) => entry.item);
+}
+
+/**
  * Filter and rank `items` by how well they match `query`.
  *
  * Ties keep their input order, which for households is the order the database

@@ -62,10 +62,12 @@ export default function SignInPage() {
       return;
     }
 
-    // refresh() before push(): every gated page is a server component reading
-    // the session from cookies, and without this they can render from the
-    // cache built while nobody was signed in.
-    router.refresh();
+    // Deliberately no router.refresh() here. It re-requests the CURRENT route,
+    // and the proxy answers an authenticated request for /sign-in with a
+    // redirect to "/" — a second navigation that races this push and can land
+    // someone on the map when they asked for /communities. The push alone is
+    // enough: every gated page is force-dynamic and is rendered fresh by the
+    // server under the cookies the sign-in just set.
     router.push(nextPath());
   }
 

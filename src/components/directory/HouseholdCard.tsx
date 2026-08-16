@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { AvatarPair } from "@/components/ui/Avatar";
 import { ActionButton } from "@/components/ui/Controls";
 import { LimitedNotice } from "@/components/ui/BottomSheet";
@@ -20,11 +21,25 @@ import type { HouseholdCard as Card, ServiceCategory } from "@/lib/types";
 export function HouseholdCard({
   card,
   categories,
+  highlightProfileId = null,
 }: {
   card: Card;
   categories: ServiceCategory[];
+  /**
+   * Set when the card was opened by searching for one particular person.
+   * Four names under one address is the right answer to "who lives here" and
+   * the wrong answer to "where is Aaron", so the person asked for is marked
+   * and scrolled to rather than left for the reader to find again.
+   */
+  highlightProfileId?: string | null;
 }) {
   const names = card.members.map((m) => m.name);
+  const highlightRef = useRef<HTMLLIElement>(null);
+
+  useEffect(() => {
+    if (!highlightProfileId) return;
+    highlightRef.current?.scrollIntoView({ block: "nearest" });
+  }, [highlightProfileId, card.id]);
   const primary = card.members.find((m) => m.is_primary) ?? card.members[0];
 
   const phone = primary?.phone;
@@ -138,18 +153,42 @@ export function HouseholdCard({
             Household
           </h3>
           <ul className="mt-2">
-            {card.members.map((m) => (
-              <li
-                key={m.profile_id}
-                className="flex items-center justify-between py-2"
-                style={{ fontSize: "var(--fp-text-base)" }}
-              >
-                <span>{m.name}</span>
-                <span style={{ fontSize: "var(--fp-text-sm)", color: "var(--fp-ink-3)" }}>
-                  {m.relationship === "owner" ? "Owner" : m.relationship === "renter" ? "Renter" : "Household"}
-                </span>
-              </li>
-            ))}
+            {card.members.map((m) => {
+              const isMatch = m.profile_id === highlightProfileId;
+              return (
+                <li
+                  key={m.profile_id}
+                  ref={isMatch ? highlightRef : undefined}
+                  aria-current={isMatch ? "true" : undefined}
+                  className="flex items-center justify-between py-2"
+                  style={{
+                    fontSize: "var(--fp-text-base)",
+                    ...(isMatch
+                      ? {
+                          background: "var(--fp-forest-wash)",
+                          // Indented rather than boxed: a full border around
+                          // one row of a list reads as a separate card.
+                          boxShadow: "inset 3px 0 0 var(--fp-forest)",
+                          borderRadius: "var(--fp-radius-sm)",
+                          paddingLeft: 12,
+                          paddingRight: 12,
+                          marginInline: -12,
+                        }
+                      : null),
+                  }}
+                >
+                  <span style={{ fontWeight: isMatch ? 600 : undefined }}>
+                    {m.name}
+                    {isMatch ? (
+                      <span className="fp-sr-only"> — matches your search</span>
+                    ) : null}
+                  </span>
+                  <span style={{ fontSize: "var(--fp-text-sm)", color: "var(--fp-ink-3)" }}>
+                    {m.relationship === "owner" ? "Owner" : m.relationship === "renter" ? "Renter" : "Household"}
+                  </span>
+                </li>
+              );
+            })}
           </ul>
         </div>
       ) : null}

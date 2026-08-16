@@ -128,31 +128,78 @@ export function SectionHeader({
   action?: React.ReactNode;
   className?: string;
 }) {
+  // Wraps rather than overflows. A flex item defaults to min-width:auto, so
+  // the title block refused to shrink below its longest word and pushed the
+  // action past the right edge — "Neighbourhood Services" next to a pill and
+  // the bell measured 416px wide no matter how narrow the phone was, which is
+  // why every tab scrolled sideways on a 320px screen.
+  //
+  // basis-48 is what decides when the action drops to its own line: the title
+  // asks for 12rem before the row is allowed to wrap, so a wide screen keeps
+  // the original single-line header and a phone gets two tidy lines instead of
+  // a squeezed heading. ml-auto keeps the action right-aligned once wrapped,
+  // which justify-between alone stops doing when an item is the only one on
+  // its line.
   return (
-    <header className={cn("flex items-end justify-between gap-4", className)}>
-      <div>
+    <header className={cn("flex flex-wrap items-end justify-between gap-x-4 gap-y-3", className)}>
+      <div className="min-w-0 grow basis-48">
         {eyebrow ? <p className="fp-eyebrow">{eyebrow}</p> : null}
-        <h1 style={{ fontSize: "var(--fp-text-2xl)", marginTop: 4 }}>{title}</h1>
+        <h1
+          className="break-words"
+          style={{ fontSize: "var(--fp-text-2xl)", marginTop: 4 }}
+        >
+          {title}
+        </h1>
       </div>
-      {action}
+      {action ? <div className="ml-auto shrink-0">{action}</div> : null}
     </header>
   );
 }
 
-/** FrontPorch/SearchField — the rounded search bar over the map. */
+/**
+ * FrontPorch/SearchField — the rounded search bar over the map.
+ *
+ * Optionally the input half of an ARIA combobox. The listbox itself lives
+ * outside this component (SearchOverlay renders it), which is what the 1.2
+ * pattern wants: the input keeps `role="combobox"` and points at the list by
+ * id, so the two can be positioned independently while the assistive-tech
+ * relationship stays intact.
+ *
+ * `type="text"`, not `type="search"`. A native search input ships its own
+ * clear affordance in WebKit — a second ✕ next to ours — and in several
+ * browsers swallows Escape to clear itself, which would fight the overlay's
+ * Escape-to-dismiss. Owning the control means owning both behaviours.
+ */
 export function SearchField({
   value,
   onChange,
   onFilterClick,
-  placeholder = "Search name, address, or service",
+  onKeyDown,
+  onFocus,
+  onClear,
+  inputRef,
+  listboxId,
+  isExpanded,
+  activeOptionId,
+  placeholder = "Search name or address",
   className,
 }: {
   value?: string;
   onChange?: (v: string) => void;
   onFilterClick?: () => void;
+  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  onFocus?: () => void;
+  onClear?: () => void;
+  inputRef?: React.Ref<HTMLInputElement>;
+  listboxId?: string;
+  isExpanded?: boolean;
+  activeOptionId?: string;
   placeholder?: string;
   className?: string;
 }) {
+  const isCombobox = typeof listboxId === "string";
+  const hasValue = typeof value === "string" && value.length > 0;
+
   return (
     <div
       className={cn("flex items-center gap-2.5 rounded-full px-4", className)}
@@ -165,23 +212,46 @@ export function SearchField({
     >
       <Icon name="search" size={18} className="shrink-0" strokeWidth={1.8} />
       <input
-        type="search"
+        ref={inputRef}
+        type="text"
         value={value}
         onChange={(e) => onChange?.(e.target.value)}
+        onKeyDown={onKeyDown}
+        onFocus={onFocus}
         placeholder={placeholder}
         aria-label={placeholder}
+        autoComplete="off"
+        autoCorrect="off"
+        spellCheck={false}
+        role={isCombobox ? "combobox" : undefined}
+        aria-autocomplete={isCombobox ? "list" : undefined}
+        aria-expanded={isCombobox ? Boolean(isExpanded) : undefined}
+        aria-controls={isCombobox && isExpanded ? listboxId : undefined}
+        aria-activedescendant={isCombobox ? activeOptionId : undefined}
         className="min-w-0 flex-1 bg-transparent outline-none"
         style={{ fontSize: "var(--fp-text-base)", color: "var(--fp-ink)" }}
       />
-      <button
-        type="button"
-        onClick={onFilterClick}
-        aria-label="Filters"
-        className="shrink-0"
-        style={{ color: "var(--fp-ink-2)" }}
-      >
-        <Icon name="filter" size={18} strokeWidth={1.8} />
-      </button>
+      {onClear && hasValue ? (
+        <button
+          type="button"
+          onClick={onClear}
+          aria-label="Clear search"
+          className="shrink-0"
+          style={{ color: "var(--fp-ink-2)" }}
+        >
+          <Icon name="close" size={18} strokeWidth={1.8} />
+        </button>
+      ) : onFilterClick ? (
+        <button
+          type="button"
+          onClick={onFilterClick}
+          aria-label="Filters"
+          className="shrink-0"
+          style={{ color: "var(--fp-ink-2)" }}
+        >
+          <Icon name="filter" size={18} strokeWidth={1.8} />
+        </button>
+      ) : null}
     </div>
   );
 }

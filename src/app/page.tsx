@@ -2,7 +2,12 @@ import { redirect } from "next/navigation";
 import { HomeView } from "@/components/home/HomeView";
 import { TabBar } from "@/components/nav/TabBar";
 import { createClient, getViewer } from "@/lib/supabase/server";
-import type { Community, HouseholdCollection, ServiceCategory } from "@/lib/types";
+import type {
+  Community,
+  HouseholdCollection,
+  SearchPerson,
+  ServiceCategory,
+} from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -25,14 +30,24 @@ export default async function HomePage() {
 
   const communityId = membership.community_id;
 
-  const [{ data: community }, { data: geo }, { data: categories }, { data: newCount }] =
-    await Promise.all([
+  const [
+    { data: community },
+    { data: geo },
+    { data: searchPeople },
+    { data: categories },
+    { data: newCount },
+  ] = await Promise.all([
       supabase
         .from("communities")
         .select("id, name, slug, description, center_lng, center_lat, default_zoom")
         .eq("id", communityId)
         .single(),
       supabase.rpc("visible_households", { target_community: communityId }),
+      // Fetched here, alongside the pins, rather than from the client after
+      // mount. The alternative is a round trip that starts only once the page
+      // is interactive, which means the first thing a resident types lands in
+      // a box that cannot answer yet.
+      supabase.rpc("search_index", { target_community: communityId }),
       supabase.from("service_categories").select("*").order("sort_order"),
       // Counted in SQL rather than from a cutoff computed here: the web
       // server and the database do not share a clock, and this badge has to
@@ -66,6 +81,7 @@ export default async function HomePage() {
       <HomeView
         community={community as unknown as Community}
         initialData={(geo as unknown as HouseholdCollection) ?? { type: "FeatureCollection", features: [] }}
+        people={(searchPeople ?? []) as SearchPerson[]}
         categories={(categories ?? []) as ServiceCategory[]}
         newResidentCount={newCount ?? 0}
       />
