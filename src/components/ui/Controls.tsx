@@ -1,0 +1,218 @@
+"use client";
+
+import { cn } from "@/lib/utils";
+import { Icon, type IconName } from "./Icon";
+
+/**
+ * FrontPorch/FilterChip — State=Default | Active
+ * The map overlay chips ("Find Help", "New Residents · 2").
+ */
+export function FilterChip({
+  label,
+  icon,
+  count,
+  active = false,
+  onClick,
+  className,
+}: {
+  label: string;
+  icon?: IconName;
+  count?: number;
+  active?: boolean;
+  onClick?: () => void;
+  className?: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={cn(
+        "inline-flex items-center gap-2 rounded-full border px-3.5 transition-[background-color,color,border-color]",
+        className,
+      )}
+      style={{
+        minHeight: 34,
+        background: active ? "var(--fp-forest)" : "var(--fp-surface)",
+        borderColor: active ? "var(--fp-forest)" : "var(--fp-line)",
+        color: active ? "var(--fp-ink-inverse)" : "var(--fp-ink)",
+        fontSize: "var(--fp-text-sm)",
+        fontWeight: 500,
+        boxShadow: "var(--fp-shadow-raised)",
+        transitionDuration: "var(--fp-dur-fast)",
+      }}
+    >
+      {icon ? <Icon name={icon} size={16} strokeWidth={1.8} /> : null}
+      {label}
+      {typeof count === "number" ? (
+        <span style={{ opacity: 0.85 }}>· {count}</span>
+      ) : null}
+    </button>
+  );
+}
+
+/**
+ * FrontPorch/ActionButton — State=Enabled | Disabled
+ *
+ * The Call / Text / Directions / Email row on a household card. Disabled is a
+ * first-class state here, not an afterthought: when a resident has hidden
+ * their number, the control is present but inert with an explanation, so the
+ * absence reads as a deliberate choice rather than a broken app.
+ */
+export function ActionButton({
+  label,
+  icon,
+  href,
+  disabled = false,
+  disabledReason,
+  className,
+}: {
+  label: string;
+  icon: IconName;
+  href?: string;
+  disabled?: boolean;
+  disabledReason?: string;
+  className?: string;
+}) {
+  const body = (
+    <>
+      <span
+        className="inline-flex items-center justify-center rounded-full"
+        style={{
+          width: 46,
+          height: 46,
+          background: disabled ? "var(--fp-surface-sunk)" : "var(--fp-forest)",
+          color: disabled ? "var(--fp-ink-3)" : "var(--fp-ink-inverse)",
+        }}
+      >
+        <Icon name={icon} size={20} />
+      </span>
+      <span
+        style={{
+          fontSize: "var(--fp-text-sm)",
+          color: disabled ? "var(--fp-ink-3)" : "var(--fp-ink-2)",
+        }}
+      >
+        {label}
+      </span>
+    </>
+  );
+
+  const shared = cn("flex flex-col items-center gap-1.5 fp-tap", className);
+
+  if (disabled || !href) {
+    return (
+      <span className={shared} aria-disabled="true" title={disabledReason}>
+        {body}
+        {disabledReason ? <span className="fp-sr-only">{disabledReason}</span> : null}
+      </span>
+    );
+  }
+
+  return (
+    <a href={href} className={shared}>
+      {body}
+    </a>
+  );
+}
+
+/** FrontPorch/SectionHeader — clay eyebrow over a serif title. */
+export function SectionHeader({
+  eyebrow,
+  title,
+  action,
+  className,
+}: {
+  eyebrow?: string;
+  title: string;
+  action?: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <header className={cn("flex items-end justify-between gap-4", className)}>
+      <div>
+        {eyebrow ? <p className="fp-eyebrow">{eyebrow}</p> : null}
+        <h1 style={{ fontSize: "var(--fp-text-2xl)", marginTop: 4 }}>{title}</h1>
+      </div>
+      {action}
+    </header>
+  );
+}
+
+/** FrontPorch/SearchField — the rounded search bar over the map. */
+export function SearchField({
+  value,
+  onChange,
+  onFilterClick,
+  placeholder = "Search name, address, or service",
+  className,
+}: {
+  value?: string;
+  onChange?: (v: string) => void;
+  onFilterClick?: () => void;
+  placeholder?: string;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn("flex items-center gap-2.5 rounded-full px-4", className)}
+      style={{
+        height: "var(--fp-searchfield-h)",
+        background: "var(--fp-surface)",
+        border: "1px solid var(--fp-line)",
+        boxShadow: "var(--fp-shadow-raised)",
+      }}
+    >
+      <Icon name="search" size={18} className="shrink-0" strokeWidth={1.8} />
+      <input
+        type="search"
+        value={value}
+        onChange={(e) => onChange?.(e.target.value)}
+        placeholder={placeholder}
+        aria-label={placeholder}
+        className="min-w-0 flex-1 bg-transparent outline-none"
+        style={{ fontSize: "var(--fp-text-base)", color: "var(--fp-ink)" }}
+      />
+      <button
+        type="button"
+        onClick={onFilterClick}
+        aria-label="Filters"
+        className="shrink-0"
+        style={{ color: "var(--fp-ink-2)" }}
+      >
+        <Icon name="filter" size={18} strokeWidth={1.8} />
+      </button>
+    </div>
+  );
+}
+
+/** Verification / moderation state. Semantic colour, never the brand accent. */
+export function StatusPill({
+  status,
+  className,
+}: {
+  status: "verified" | "pending" | "rejected" | "unverified";
+  className?: string;
+}) {
+  const map = {
+    verified: { label: "Verified", bg: "var(--fp-verified-wash)", fg: "var(--fp-verified)" },
+    pending: { label: "Awaiting review", bg: "var(--fp-pending-wash)", fg: "var(--fp-pending)" },
+    rejected: { label: "Not approved", bg: "var(--fp-rejected-wash)", fg: "var(--fp-rejected)" },
+    unverified: { label: "Unverified", bg: "var(--fp-surface-sunk)", fg: "var(--fp-ink-3)" },
+  }[status];
+
+  return (
+    <span
+      className={cn("inline-flex items-center rounded-full px-2.5 py-0.5", className)}
+      style={{
+        background: map.bg,
+        color: map.fg,
+        fontSize: "var(--fp-text-xs)",
+        fontWeight: 600,
+        letterSpacing: "0.02em",
+      }}
+    >
+      {map.label}
+    </span>
+  );
+}

@@ -1,0 +1,169 @@
+/* ============================================================
+   Front Porch — design tokens
+   Extracted from Figma: file 5HBA3FHg4LBdDD8rN7SphN, page "02 Front Porch".
+   Nothing in this app hardcodes a palette, type, or spacing value.
+   The MapLibre style JSON is generated from these same values, so the
+   map ground and the app ground are literally the same color.
+   ============================================================ */
+
+:root {
+  /* ---- Ground & surface ------------------------------------ */
+  --fp-paper: #faf7f0;          /* app background */
+  --fp-map-base: #efe8da;       /* map ground — Figma color/map-base */
+  --fp-surface: #ffffff;        /* cards, sheets */
+  --fp-surface-sunk: #f4efe4;   /* inset wells, search field rest state */
+  --fp-scrim: rgb(26 26 24 / 0.42);
+
+  /* ---- Ink ------------------------------------------------- */
+  --fp-ink: #1a1a18;
+  --fp-ink-2: #4d4f49;
+  /* Darkened from #7a7c73 in Phase 6: axe measured 3.96:1 against paper and
+     4.40:1 against the sunk surface, both under the 4.5 AA floor for body
+     text — and this token carries nearly every secondary line in the app.
+     #696b63 clears 4.5 on all three grounds (paper 5.05, white 5.41,
+     sunk 4.67) while holding the same warm-grey hue. */
+  --fp-ink-3: #696b63;
+  --fp-ink-inverse: #faf7f0;
+
+  /* ---- Line ------------------------------------------------ */
+  --fp-line: #e8e2d5;
+  --fp-line-soft: #f0ebe0;
+
+  /* ---- Brand: forest ---------------------------------------
+     Primary. Carries structure: active tabs, pins, primary actions. */
+  --fp-forest: #24503a;
+  --fp-forest-hi: #2f6a4b;
+  --fp-forest-lo: #1a3b2b;
+  --fp-forest-wash: #e6eee8;
+
+  /* ---- Brand: clay -----------------------------------------
+     Accent, used sparingly: eyebrows, service pins, service tags. */
+  /* Darkened from #c4552f for the same reason: it was 4.19:1 on paper, and
+     .fp-eyebrow renders it at 12px uppercase, which is squarely normal-text
+     territory. #ae4c2a keeps the terracotta but clears AA everywhere. */
+  --fp-clay: #ae4c2a;
+  --fp-clay-hi: #d86b45;
+  --fp-clay-wash: #f8e9e1;
+
+  /* ---- Map landscape --------------------------------------- */
+  --fp-map-green: #dbe4d4;      /* parks, green belt */
+  --fp-map-water: #a8c8dc;      /* ponds, lakes */
+  --fp-map-road: #ffffff;
+  --fp-map-road-minor: #f7f2e8;
+  --fp-map-parcel: #e6dfd0;     /* building footprints */
+  --fp-map-label: #8a8578;
+
+  /* ---- Semantic --------------------------------------------
+     Deliberately separate from the brand accent. Verification and
+     moderation states must never be confused with decoration. */
+  --fp-verified: #24503a;
+  --fp-verified-wash: #e6eee8;
+  --fp-pending: #b8791f;
+  --fp-pending-wash: #f9efdc;
+  --fp-rejected: #a8341f;
+  --fp-rejected-wash: #f8e5e1;
+  --fp-flagged: #c4552f;
+  --fp-flagged-wash: #f8e9e1;
+  --fp-info: #3a6b8a;
+  --fp-info-wash: #e4eef4;
+
+  /* ---- Type ------------------------------------------------
+     Display is Source Serif 4, self-hosted via next/font.
+     Body is the platform UI stack so it renders as SF on iOS and
+     Roboto on Android — matching the mockups on the target device
+     for zero download cost. */
+  --fp-font-display: var(--font-source-serif), ui-serif, Georgia, serif;
+  --fp-font-body: ui-sans-serif, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Roboto, system-ui, sans-serif;
+  --fp-font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+
+  --fp-text-xs: 0.6875rem;   /* 11 — eyebrow, pin callout */
+  --fp-text-sm: 0.8125rem;   /* 13 — meta, tab labels */
+  --fp-text-base: 0.9375rem; /* 15 — body */
+  --fp-text-md: 1.0625rem;   /* 17 — row titles */
+  --fp-text-lg: 1.25rem;     /* 20 — card headings */
+  --fp-text-xl: 1.5rem;      /* 24 — household name */
+  --fp-text-2xl: 1.75rem;    /* 28 — screen title */
+
+  --fp-leading-tight: 1.15;
+  --fp-leading-snug: 1.32;
+  --fp-leading-normal: 1.5;
+  --fp-tracking-eyebrow: 0.09em;
+  --fp-tracking-tight: -0.015em;
+
+  /* ---- Space (4px base) ------------------------------------ */
+  --fp-space-1: 0.25rem;
+  --fp-space-2: 0.5rem;
+  --fp-space-3: 0.75rem;
+  --fp-space-4: 1rem;
+  --fp-space-5: 1.25rem;
+  --fp-space-6: 1.5rem;
+  --fp-space-8: 2rem;
+  --fp-space-10: 2.5rem;
+  --fp-space-12: 3rem;
+
+  /* ---- Radius ---------------------------------------------- */
+  --fp-radius-sm: 8px;
+  --fp-radius-md: 12px;
+  --fp-radius-lg: 16px;
+  --fp-radius-xl: 20px;
+  --fp-radius-sheet: 24px;
+  --fp-radius-pill: 999px;
+
+  /* ---- Elevation -------------------------------------------
+     Front Porch is a flat, papery system. Shadows stay near-invisible;
+     separation comes from hairlines and ground/surface contrast. */
+  --fp-shadow-card: 0 1px 2px rgb(26 26 24 / 0.04);
+  --fp-shadow-raised: 0 2px 8px rgb(26 26 24 / 0.06);
+  --fp-shadow-sheet: 0 -2px 16px rgb(26 26 24 / 0.08);
+  --fp-shadow-pin: 0 2px 4px rgb(26 26 24 / 0.24);
+
+  /* ---- Controls --------------------------------------------
+     44px is the WCAG 2.2 AA minimum target and is a token, not a
+     literal, so an audit can change it in one place. */
+  --fp-tap-min: 44px;
+  --fp-control-h: 44px;
+  --fp-tabbar-h: 56px;
+  --fp-searchfield-h: 44px;
+
+  /* ---- Bottom sheet snap points ----------------------------- */
+  --fp-sheet-peek: 88px;
+  --fp-sheet-half: 46svh;
+  --fp-sheet-full: 92svh;
+
+  /* ---- Motion ----------------------------------------------
+     Compositor-friendly properties only: transform, opacity. */
+  --fp-dur-fast: 140ms;
+  --fp-dur-normal: 240ms;
+  --fp-dur-sheet: 320ms;
+  --fp-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --fp-ease-inout: cubic-bezier(0.65, 0, 0.35, 1);
+
+  /* ---- Layers ----------------------------------------------- */
+  --fp-z-map: 0;
+  --fp-z-map-overlay: 10;
+  --fp-z-sheet: 20;
+  --fp-z-tabbar: 30;
+  --fp-z-modal: 40;
+  --fp-z-toast: 50;
+}
+
+/* Front Porch is a single, committed light identity — warm paper is the
+   product's whole character, and a dark inversion would read as a
+   different app. We honor the OS preference only by deepening contrast,
+   never by flipping the ground. */
+@media (prefers-contrast: more) {
+  :root {
+    --fp-ink-2: #34362f;
+    --fp-ink-3: #56584f;
+    --fp-line: #d4ccbb;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --fp-dur-fast: 0ms;
+    --fp-dur-normal: 0ms;
+    --fp-dur-sheet: 0ms;
+  }
+}

@@ -1,0 +1,119 @@
+@import "tailwindcss";
+@import "../styles/tokens.css";
+
+/* Expose the Front Porch tokens to Tailwind v4 utilities, so `bg-paper`
+   and `text-ink` resolve to the same values the components use directly.
+   One source of truth: src/styles/tokens.css. */
+@theme inline {
+  --color-paper: var(--fp-paper);
+  --color-map-base: var(--fp-map-base);
+  --color-surface: var(--fp-surface);
+  --color-surface-sunk: var(--fp-surface-sunk);
+  --color-ink: var(--fp-ink);
+  --color-ink-2: var(--fp-ink-2);
+  --color-ink-3: var(--fp-ink-3);
+  --color-line: var(--fp-line);
+  --color-line-soft: var(--fp-line-soft);
+  --color-forest: var(--fp-forest);
+  --color-forest-hi: var(--fp-forest-hi);
+  --color-forest-wash: var(--fp-forest-wash);
+  --color-clay: var(--fp-clay);
+  --color-clay-wash: var(--fp-clay-wash);
+  --color-verified: var(--fp-verified);
+  --color-pending: var(--fp-pending);
+  --color-rejected: var(--fp-rejected);
+
+  --font-display: var(--fp-font-display);
+  --font-body: var(--fp-font-body);
+
+  --radius-card: var(--fp-radius-lg);
+  --radius-sheet: var(--fp-radius-sheet);
+  --radius-pill: var(--fp-radius-pill);
+}
+
+/* ---------- base ---------------------------------------------- */
+
+html {
+  -webkit-text-size-adjust: 100%;
+  /* The map and bottom sheet own scrolling; the document itself must not
+     bounce underneath them on iOS. */
+  overscroll-behavior-y: none;
+}
+
+body {
+  background: var(--fp-paper);
+  color: var(--fp-ink);
+  font-family: var(--fp-font-body);
+  font-size: var(--fp-text-base);
+  line-height: var(--fp-leading-normal);
+  -webkit-font-smoothing: antialiased;
+  margin: 0;
+  /* Standalone PWA: keep content clear of the notch and the home indicator. */
+  padding-top: env(safe-area-inset-top);
+}
+
+h1, h2, h3 {
+  font-family: var(--fp-font-display);
+  font-weight: 600;
+  letter-spacing: var(--fp-tracking-tight);
+  line-height: var(--fp-leading-tight);
+  text-wrap: balance;
+  margin: 0;
+}
+
+/* ---------- focus --------------------------------------------- */
+/* Visible on every interactive element. Clay rather than forest so the
+   ring reads against the forest-filled primary controls too. */
+
+:focus-visible {
+  outline: 2px solid var(--fp-clay);
+  outline-offset: 2px;
+  border-radius: var(--fp-radius-sm);
+}
+
+/* ---------- utilities ----------------------------------------- */
+
+.fp-eyebrow {
+  font-size: var(--fp-text-xs);
+  font-weight: 600;
+  letter-spacing: var(--fp-tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--fp-clay);
+}
+
+/* Every tappable control clears the WCAG 2.2 AA minimum. Applied as a
+   class rather than a per-component literal so an audit can widen it once. */
+.fp-tap {
+  min-height: var(--fp-tap-min);
+  min-width: var(--fp-tap-min);
+}
+
+.fp-card {
+  background: var(--fp-surface);
+  border: 1px solid var(--fp-line);
+  border-radius: var(--fp-radius-lg);
+  box-shadow: var(--fp-shadow-card);
+}
+
+/* Visually hidden but reachable by screen readers — used for the map's
+   text alternative, which is how keyboard users browse pins. */
+.fp-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
